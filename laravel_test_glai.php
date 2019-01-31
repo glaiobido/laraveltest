@@ -6,6 +6,9 @@ use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\Http\Request;
 
+use App\User;
+use App\UserLog;
+
 /**
  * Class AdminRolesController
  */
@@ -22,14 +25,14 @@ class AdminController extends Controller
             'reason'   => 'string',
         ]);
 
-        $user = \User::find($id);
+        $user = User::find($id);
 
         //If user not found
-        if (! $user) {
+        if (!$user) {
             throw new \Exception('User not found');
-        }
+        } 
 
-        //If user not admin
+        // When user is of role Admin
         if ($user->role == 1) {
             throw new \Exception('Cannot ban an admin');
         }
@@ -38,23 +41,17 @@ class AdminController extends Controller
         $user->role = 9;
         $user->status = 0;
         $user->save();
-
+        
         //If there was a reason passed in
-        if (isset($data['reason']) && $data['reason']) {
-            \UserLog::create([
-                'user_id' => $user->id,
-                'action' => 'banned',
-                'reason' => $data['reason'],
-            ]);
-        } else {
-            \UserLog::create([
-                'user_id' => $user->id,
-                'action' => 'banned',
-            ]);
-        }
+        UserLog::create([
+            'user_id'   => $user->id,
+            'action'    => 'banned',
+            'reason'    => (isset($data['reason']) && $data['reason']) ? $data['reason'] : null
+        ]);
 
         //Go back with message
-        return Redirect::back()->with('Message', 'User has been banned');
+        return redirect()->back()
+                         ->with('Message', 'User has been banned');
     }
 
 }
